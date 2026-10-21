@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant N as Next.js sunucusu (BFF)
+    participant G as Flight Gateway
+    participant P as PostgreSQL
+    Note over N: Başlangıçta Infisical'dan<br/>clientId ve clientSecret okunur
+    N->>G: POST /v1/auth/token (clientId, clientSecret)
+    G->>P: client kaydı, pod cache'inde yoksa (secret hash'i, scope, kota planı)
+    G-->>N: 200 accessToken (JWT, 10 dk), expiresIn
+    Note over N: Token bellekte tutulur,<br/>ömrünün %80'inde yenilenir
+    N->>G: GET/POST /v1/... (Bearer JWT)
+    Note over G: Gateway kendi imzaladığı JWT'nin imza, exp ve scope'unu<br/>yerelde doğrular, jti deny-list'e bakar (Redis durum örneği)
+    alt JWT süresi doldu veya geçersiz
+      G-->>N: 401 TOKEN_EXPIRED
+      N->>G: POST /v1/auth/token (bir kez)
+      G-->>N: yeni JWT
+      N->>G: istek tekrar (bir kez)
+    end

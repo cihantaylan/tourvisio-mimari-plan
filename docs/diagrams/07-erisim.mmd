@@ -1,0 +1,15 @@
+flowchart LR
+    BR["Tarayıcı"]:::pub
+    MOB["Mobil, B2B<br/>(ileride)"]:::fut
+    CF["Cloudflare"]:::pub
+    TRF["Traefik"]:::pub
+    NX["Next.js sunucusu (BFF)"]:::pub
+    GW["Flight Gateway"]:::inner
+    BR -->|"HTTPS, yalnız Next.js"| CF
+    MOB -.->|"api.gidiyorum.com<br/>client credentials, kota, IP izni"| CF
+    CF --> TRF --> NX
+    TRF -.->|"api.gidiyorum.com"| GW
+    NX ==>|"client: web, scope flights:read"| GW
+    classDef pub fill:#d4f4dd,stroke:#2e7d32,color:#000
+    classDef inner fill:#ffe0b2,stroke:#e65100,color:#000
+    classDef fut fill:#eeeeee,stroke:#888,stroke-dasharray:4 3,color:#000

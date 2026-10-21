@@ -1,0 +1,37 @@
+flowchart TB
+    BR["Tarayıcı"]:::pub
+    MOB["Mobil, B2B<br/>(ileride)"]:::fut
+    OPR["Operatör"]:::inner
+    CF["Cloudflare<br/>DNS, WAF, bot, DDoS, TLS"]:::pub
+    ZT["VPN veya<br/>Cloudflare Access"]:::inner
+    INF["Infisical<br/>(Cloud veya ayrı host)"]:::ext
+    subgraph SWARM["Docker Swarm, Dokploy yönetiminde (3 node)"]
+      subgraph PUB["Genel overlay ağı"]
+        TRF["Traefik ingress<br/>443, yalnız Cloudflare IP'leri"]:::pub
+        NX["Next.js<br/>(BFF)"]:::pub
+      end
+      subgraph INT["İç overlay ağı (internete kapalı, şifreli)"]
+        GWY["flight-gateway<br/>en az 3 replika, 3 node'a yayılı"]:::inner
+        RD[("Redis: cache (allkeys-lru) + durum (noeviction)<br/>2 örnek, 3 Sentinel")]:::inner
+        PG[("PostgreSQL")]:::inner
+        OTL["OTel collector + SigNoz"]:::inner
+      end
+      DKP["Dokploy paneli"]:::inner
+    end
+    EGR["Sabit egress IP<br/>(NAT)"]:::inner
+    TV["TourVisio (SAN TSG)<br/>IP beyaz listesi"]:::ext
+    BR -->|"HTTPS"| CF
+    MOB -.->|"api.gidiyorum.com"| CF
+    CF --> TRF --> NX
+    NX ==>|"iç overlay (IPsec), HTTP + JWT"| GWY
+    TRF -.->|"api.gidiyorum.com"| GWY
+    GWY --> RD & PG
+    GWY -.->|"OTLP"| OTL
+    INF -.->|"clientId, clientSecret"| NX
+    INF -.->|"başlangıçta secret"| GWY
+    GWY ==>|"HTTPS"| EGR ==> TV
+    OPR --> ZT --> DKP
+    classDef pub fill:#d4f4dd,stroke:#2e7d32,color:#000
+    classDef inner fill:#ffe0b2,stroke:#e65100,color:#000
+    classDef ext fill:#d6e4ff,stroke:#1a4fb4,color:#000
+    classDef fut fill:#eeeeee,stroke:#888,stroke-dasharray:4 3,color:#000

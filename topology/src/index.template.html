@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src data:; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="description" content="__DESCRIPTION__">
+<title>__TITLE__</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 4 28 10.5 16 17 4 10.5z' fill='none' stroke='%232f5bea' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cpath d='M4 16.5 16 23l12-6.5M4 22 16 28.5 28 22' fill='none' stroke='%232f5bea' stroke-width='2.2' stroke-linejoin='round' opacity='.55'/%3E%3C/svg%3E">
+<script>try{var t=localStorage.getItem('tvtopo-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<style>
+__STYLES__
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<defs>
+<symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></symbol>
+<symbol id="i-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-prev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 6-6 6 6 6"/></symbol>
+<symbol id="i-next" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 6 6 6-6 6"/></symbol>
+<symbol id="i-logo" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M16 4 28 10.5 16 17 4 10.5z"/><path d="M4 16.5 16 23l12-6.5M4 22 16 28.5 28 22" opacity=".55"/></symbol>
+__ICONS__
+</defs>
+</svg>
+
+<header class="top" role="banner">
+  <div class="brand">
+    <svg aria-hidden="true"><use href="#i-logo"/></svg>
+    <div class="brandtext"><h1 id="title">__TITLE__</h1><p class="sub">__SUBTITLE__</p></div>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Görünümler">
+    <button class="tab" role="tab" id="tab-map" data-view="map" aria-controls="view-map">Harita</button>
+    <button class="tab" role="tab" id="tab-components" data-view="components" aria-controls="view-components">Bileşenler</button>
+    <button class="tab" role="tab" id="tab-flows" data-view="flows" aria-controls="view-flows">Akışlar</button>
+    <button class="tab" role="tab" id="tab-about" data-view="about" aria-controls="view-about">Hakkında</button>
+  </nav>
+  <div class="tools">
+    <div class="seg desktop-only" role="group" aria-label="Görünüm" id="projseg">
+      <button data-proj="3d" aria-pressed="true" title="İzometrik 3D (tuş 3)">3D</button>
+      <button data-proj="2d" aria-pressed="false" title="Düz 2D (tuş 2)">2D</button>
+    </div>
+    <button class="iconbtn" id="theme" aria-label="Tema: sistem" title="Tema: sistem"><svg aria-hidden="true"><use href="#i-auto"/></svg></button>
+  </div>
+</header>
+
+<div class="bar" id="mapbar">
+  <span class="lbl">Akış</span>
+  <div class="flows" id="flowchips" role="group" aria-label="Akışlar"></div>
+</div>
+
+<main id="main" tabindex="-1">
+  <section class="view" id="view-map" role="tabpanel" aria-labelledby="tab-map">
+    <div class="maplist" id="maplist"></div>
+    <div class="mapwrap" id="mapwrap">
+      <div id="canvas"></div>
+      <div class="hint" id="hint"></div>
+      <div class="zoom" role="group" aria-label="Yakınlaştırma">
+        <button id="zout" aria-label="Uzaklaştır" type="button">&minus;</button>
+        <button id="zin" aria-label="Yakınlaştır" type="button">+</button>
+        <button id="zfit" class="fit" type="button">Sığdır</button>
+      </div>
+      <div class="stepbar" id="stepbar" hidden></div>
+    </div>
+    <aside class="panel" id="panel" aria-label="Ayrıntılar" hidden></aside>
+  </section>
+  <section class="view" id="view-components" role="tabpanel" aria-labelledby="tab-components"><div class="page"><div class="inner" id="components"></div></div></section>
+  <section class="view" id="view-flows" role="tabpanel" aria-labelledby="tab-flows"><div class="page"><div class="inner" id="flowspage"></div></div></section>
+  <section class="view" id="view-about" role="tabpanel" aria-labelledby="tab-about"><div class="page"><div class="inner" id="about"></div></div></section>
+</main>
+<div class="sr" id="sr" aria-live="polite"></div>
+
+<script type="application/json" id="topo-data">__DATA__</script>
+<script>
+__SCRIPTS__
+</script>
+</body>
+</html>

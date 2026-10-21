@@ -1,62 +1,49 @@
 flowchart TB
-    BR["Tarayici"]
-    MOB["Mobil uygulama<br/>(ileride)"]
-    B2B["B2B acente<br/>(ileride)"]
-    CF["Cloudflare<br/>WAF, bot, DDoS, TLS"]
-
-    subgraph FE["gidiyorum.com on yuzu"]
-      NX["Next.js sunucusu<br/>(BFF, route handlers)"]
-    end
-
+    BR["Tarayıcı"]:::pub
+    MOB["Mobil, B2B<br/>(ileride)"]:::fut
+    CF["Cloudflare<br/>WAF, bot, DDoS, TLS"]:::pub
+    TRF["Traefik ingress"]:::pub
+    NX["Next.js sunucusu<br/>(BFF)"]:::pub
+    SEC["Infisical<br/>(Cloud veya ayrı host)"]:::ext
     subgraph SVC["Flight Gateway Servisi (stateless, N replika)"]
-      GWY["Giris katmani<br/>JWT dogrulama, rate limit,<br/>istek dogrulama, requestId"]
-      subgraph FM["Flight modulu"]
-        LOC["Lokasyon"]
-        SRCH["Arama ve sonuc<br/>(sayfalama, filtre, siralama)"]
-        OFR["Teklif detayi"]
+      GWY["Giriş katmanı<br/>JWT doğrulama, rate limit,<br/>istek doğrulama, requestId"]:::inner
+      subgraph FM["Flight modülü"]
+        LOC["Lokasyon"]:::inner
+        SRCH["Arama ve sonuç<br/>(sayfalama, filtre, sıralama)"]:::inner
+        OFR["Teklif detayı"]:::inner
       end
-      PORT["FlightSupplier arayuzu"]
-      subgraph TVA["TourVisio adaptoru"]
-        TKN["Token yoneticisi<br/>(paylasimli, single-flight)"]
-        RES["Dayaniklilik<br/>timeout, retry, circuit breaker,<br/>bulkhead"]
-        MAP["Mapper<br/>TourVisio modeli to ic model"]
+      PORT["FlightSupplier arayüzü"]:::inner
+      subgraph TVA["TourVisio adaptörü"]
+        TKN["Token yöneticisi<br/>(paylaşımlı, single-flight)"]:::inner
+        RES["Dayanıklılık<br/>timeout, retry, breaker, bulkhead"]:::inner
+        MAP["Mapper<br/>TourVisio modeli → iç model"]:::inner
       end
     end
-
-    RD[("Redis<br/>token, arama sonuclari,<br/>autocomplete, rate limit, kilit")]
-    PG[("PostgreSQL<br/>client kayitlari, audit")]
-    OBS["OpenTelemetry, metrik,<br/>log, Sentry"]
-    SEC["Secret manager"]
-    TV["TourVisio (SAN TSG)<br/>login, autocomplete,<br/>pricesearch, getfarerules"]
-
+    RDC[("Redis cache (allkeys-lru)<br/>sr, sq, loc, fr")]:::inner
+    RDS[("Redis durum, kuyruk (noeviction)<br/>sid, token, kilit, rate limit,<br/>deny-list, BullMQ")]:::inner
+    PG[("PostgreSQL + Prisma<br/>client kayıtları, audit")]:::inner
+    OBS["OpenTelemetry, SigNoz"]:::inner
+    TV["TourVisio (SAN TSG)<br/>login, autocomplete,<br/>pricesearch, getfarerules"]:::ext
     BR -->|"HTTPS"| CF
-    CF --> NX
-    NX ==>|"HTTPS + JWT<br/>(sunucudan sunucuya)"| GWY
-    MOB -.->|"mobil BFF veya<br/>kisitli client"| GWY
-    B2B -.->|"client credentials"| GWY
-    GWY --> LOC
-    GWY --> SRCH
-    GWY --> OFR
-    LOC --> PORT
-    SRCH --> PORT
-    OFR --> PORT
-    PORT --> TKN
-    PORT --> RES
+    MOB -.->|"api.gidiyorum.com"| CF
+    CF --> TRF --> NX
+    TRF -.->|"api.gidiyorum.com"| GWY
+    NX ==>|"HTTP + JWT<br/>(şifreli overlay)"| GWY
+    SEC -.->|"clientId, clientSecret"| NX
+    SEC -.->|"başlangıçta secret"| GWY
+    GWY --> LOC & SRCH & OFR
+    LOC & SRCH & OFR --> PORT
+    PORT --> TKN & RES
     RES --> MAP
     RES -->|"HTTPS"| TV
     TKN -->|"login"| TV
-    LOC --> RD
-    SRCH --> RD
-    TKN --> RD
+    FM --> RDC
+    FM --> RDS
+    TKN --> RDS
+    GWY --> RDS
     GWY --> PG
     GWY -.-> OBS
-    SEC -.->|"baslangicta enjekte"| TKN
-
     classDef pub fill:#d4f4dd,stroke:#2e7d32,color:#000
     classDef inner fill:#ffe0b2,stroke:#e65100,color:#000
     classDef ext fill:#d6e4ff,stroke:#1a4fb4,color:#000
-    class BR,CF,NX pub
     classDef fut fill:#eeeeee,stroke:#888,stroke-dasharray:4 3,color:#000
-    class MOB,B2B fut
-    class GWY,LOC,SRCH,OFR,PORT,TKN,RES,MAP,RD,PG,OBS,SEC inner
-    class TV ext

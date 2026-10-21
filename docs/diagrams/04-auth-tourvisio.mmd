@@ -1,0 +1,31 @@
+sequenceDiagram
+    participant S as Flight servisi (herhangi bir pod)
+    participant K as Token yöneticisi
+    participant R as Redis durum
+    participant T as TourVisio
+    S->>K: getToken(deadline)
+    K->>R: GET tv:token:{agency}
+    alt Token var ve kalan ömür eşikten fazla (eşik: min(5 dk, ömrün %20'si))
+      R-->>K: {token, expiresOn}
+      K-->>S: token
+    else Yok veya ömrü bitiyor
+      K->>R: SET tv:lock:{agency} {owner} NX EX 15
+      alt Kilit alındı
+        K->>T: POST /api/authenticationservice/login (Agency, User, Password)
+        T-->>K: token, expiresOn
+        K->>R: SET tv:token:{agency} {token, expiresOn} EX max(expiresOn - now, 30)
+        K->>R: DEL tv:lock:{agency} (yalnız sahibiyse, Lua compare-and-delete)
+        K-->>S: token
+      else Başka pod yeniliyor
+        Note over K: Eski token hâlâ geçerliyse onu kullanır
+        K->>R: 200 ms aralıkla GET tv:token:{agency} (deadline'a kadar)
+        R-->>K: yeni token
+        K-->>S: token
+      end
+    end
+    S->>T: arama/autocomplete (Authorization: Bearer token)
+    alt HTTP 401 veya header.messages'te token hatası
+      S->>K: invalidate(tokenId) (yalnızca aynı token ise sil)
+      Note over K,T: Relogin, yukarıdaki kilitli yenileme yolundan geçer
+      S->>T: isteği bir kez tekrarla
+    end

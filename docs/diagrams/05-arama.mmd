@@ -1,0 +1,39 @@
+sequenceDiagram
+    participant N as Next.js
+    participant G as Flight Gateway
+    participant C as Redis cache
+    participant S as Redis durum
+    participant A as TourVisio adaptörü
+    participant T as TourVisio
+    N->>G: POST /v1/flights/searches (istek)
+    Note over G,T: İsteğin deadline'ı (12 sn) tüm zincir boyunca iletilir, yetmezse 504
+    G->>G: doğrula, normalize et, hash çıkar (TourVisio'ya giden alanlar + culture)
+    G->>C: GET sq:{hash}, sonra GET sr:{resultId}
+    alt Paylaşımlı sonuç var ve kalan ömrü en az 5 dk
+      Note over G: TourVisio'ya gidilmez
+    else Yok veya ömrü kısa
+      G->>S: SET sl:{hash} {owner} NX EX 15 (single-flight kilidi)
+      alt Kilit bizde (lider)
+        G->>S: DEL sl:{hash}:err (eski hata kaydı)
+        G->>A: search(istek, deadline)
+        A->>T: pricesearch (ProductType 3)
+        alt Başarılı
+          T-->>A: header, body (searchId, expiresOn, flights[], offers[])
+          A-->>G: normalize sonuç (mapper), expiresOn
+          G->>C: SET sr:{resultId} EX (expiresOn - 30 sn)
+          G->>C: SET sq:{hash} resultId EX 120
+        else Hata veya timeout
+          G->>S: SET sl:{hash}:err EX 5
+          G-->>N: §3 hata koduyla yanıt (sid yazılmaz, akış biter)
+        end
+        G->>S: DEL sl:{hash} (yalnız sahibiyse, Lua compare-and-delete)
+      else Başka istek çekiyor (bekleyen)
+        loop 250 ms aralıkla, deadline'a kadar
+          G->>C: GET sq:{hash}
+          G->>S: GET sl:{hash}:err
+        end
+        Note over G: Hata kaydı varsa hemen §3 hata koduyla yanıt (sid yazılmaz, akış biter)
+      end
+    end
+    G->>S: SET sid:{searchId} {resultId, clientId, sessionId, expiresAt, request} EX (expiresAt + 1 sa)
+    G-->>N: 201 searchId, expiresAt, özet

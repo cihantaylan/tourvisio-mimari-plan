@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant N as Next.js
+    participant G as Flight Gateway
+    participant C as Redis cache
+    participant S as Redis durum
+    N->>G: GET /v1/flights/searches/{id}/results?sort=price:asc&airlines=TK&page=1
+    G->>S: GET sid:{id}
+    alt Yok veya clientId ya da sessionId uyuşmuyor
+      G-->>N: 404 NOT_FOUND
+    else Var ama expiresAt geçmiş
+      G-->>N: 410 SEARCH_EXPIRED + refreshUrl
+      N->>G: POST /v1/flights/searches/{id}/refresh
+      G-->>N: 201 yeni searchId (aynı parametreler, §4c akışı)
+    else Geçerli
+      G->>C: GET sr:{resultId} (pod içi LRU ile)
+      alt sr yok (cache tahliyesi veya yeniden başlatma)
+        G-->>N: 410 SEARCH_EXPIRED + refreshUrl
+      else sr var
+        G->>G: filtrele, sırala, sayfala, facet say (bellekte)
+        G-->>N: 200 items[], facets, expiresAt
+      end
+    end
