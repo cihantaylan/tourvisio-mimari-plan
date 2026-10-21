@@ -488,7 +488,7 @@
         "BullMQ",
         "TLS + parola"
       ],
-      "scale": "Ayrı mantıksal örnek, Sentinel ile 3 node. Erişilemezse: token pod içi kopyayla sürer, kilitler pod içi single-flight'a düşer, rate limit pod içi yedek sayaçla çalışır, jti deny-list fail-open olur (bilinen risk).",
+      "scale": "Ayrı mantıksal örnek, Sentinel ile 3 node. Erişilemezse: token pod içi kopyayla sürer, kilitler pod içi single-flight'a düşer, rate limit pod içi yedek sayaçla çalışır, jti deny-list fail-open olur (bilinen risk). `sid` okunamaz/yazılamaz: arama ve listeleme 503 döner.",
       "keysTitle": "Anahtarlar",
       "keys": [
         {

@@ -98,7 +98,7 @@ Tek servis yeterli:
 
 ### Dağıtım topolojisi
 
-Gateway bugün internete kapalıdır. Mobil/B2B açıldığında yalnız `api.gidiyorum.com` rotası Traefik üzerinden açılır. Port ve erişim matrisi: [`docs/dagitim-topolojisi.md`](docs/dagitim-topolojisi.md). Etkileşimli 3D sürümü: `topology/dist/tourvisio-topology.html`
+Gateway bugün internete kapalıdır. Mobil/B2B açıldığında yalnız `api.gidiyorum.com` rotası Traefik üzerinden açılır. Port ve erişim matrisi: [`docs/dagitim-topolojisi.md`](docs/dagitim-topolojisi.md). Etkileşimli 3D sürümü: `topology/dist/tourvisio-topology.html`.
 
 ```mermaid
 flowchart TB
@@ -242,12 +242,12 @@ Anahtarlar (`expiresAt` = `expiresOn - 30 sn`, client'a bu verilir):
 | | |
 |---|---|
 | Endpoint | `GET /v1/flights/searches/{searchId}/results?page=1&pageSize=20&sort=price:asc&airlines=TK,PC&maxStops=1&departureFrom=06:00&departureTo=12:00` |
-| Girdi | `page` (1 tabanlı), `pageSize` (en çok 50), `sort` (`price`, `duration`, `departureTime`; `:asc/desc`), filtreler: `airlines`, `maxStops` (0, 1, 2; her iki bacak için en çok aktarma), `departureFrom` / `departureTo`, `maxPrice?` |
+| Girdi | `page` (1 tabanlı), `pageSize` (varsayılan 20, en çok 50), `sort` (`price`, `duration`, `departureTime`; `:asc/desc`), filtreler: `airlines`, `maxStops` (0, 1, 2; her iki bacak için en çok aktarma), `departureFrom` / `departureTo`, `maxPrice?` |
 | Kurallar | `departureFrom/To` gidiş bacağının ilk segment kalkış saatidir. `duration` sıralaması gidiş-dönüşte iki bacağın toplamıdır. Her facet, kendi filtresi hariç diğer filtrelere göre sayılır. |
 | Çıktı | `items[]`, sayfa bilgisi, `facets`, `appliedFilters`, `expiresAt`, `staleSoon`. Header `X-Search-Expires-In` (saniye). Örnek §4d. |
 | TourVisio çağrısı | Yok. Sonuç Redis'te normalize halde durur. |
 | Cache | `sid` ile `sr:{resultId}` okunur (gzip blob). Pod içi LRU 30 sn, ayrıştırılmış nesneyi tutar. Filtre ve sıralama bellekte yapılır. |
-| Hatalar | 400, 404, 410, 429 |
+| Hatalar | 400, 404, 410, 429, 503 |
 
 Yenileme:
 
@@ -268,7 +268,7 @@ Yenileme:
 | Çıktı | Segmentler, bagaj (el bagajı `carryOn` + kayıtlı `checked`), `cabinClass` ve `fareFamily`, fiyat kırılımı (taban, vergi, hizmet bedeli, toplam, para birimi), iade/değişiklik özeti, `expiresAt` |
 | TourVisio çağrısı | Normalde yok: bagaj, paket ve fiyat kırılımı arama sonucundaki `offers[]` içinden gelir. Yalnız `include=fareRules` ile `getfarerules` çağrılır (`supplierRef` ile). Teklifin geçerliliğini rezervasyon adımı doğrular (bkz. §8). |
 | Cache | `getfarerules` yanıtı `fr:{resultId}:{offerId}` (cache örneği), TTL aramanın kalan ömrü. |
-| Hatalar | 404, 410. 502, 503, 504 yalnız `fareRules` çağrısında. |
+| Hatalar | 400, 404, 410, 429, 503. 502, 504 yalnız `fareRules` çağrısında. |
 
 Örnek yanıt (yalnız gidiş segmenti gösterilmiştir). Fiyat: 1650,00 + 380,00 + 120,00 = 2150,00.
 
@@ -482,7 +482,8 @@ Next.js servise sunucudan bağlanır (BFF): tarayıcı route handler'ları çağ
 
 1. `clientSecret` ve servis JWT'si tarayıcıya çıkmaz.
 2. Next.js, kullanıcı oturumunu (`sessionId`) ve gerçek IP'yi header ile iletir (`X-Client-Session`, `X-Forwarded-For`). Gateway bunları yalnız doğrulanmış client'tan kabul eder.
-3. Tarayıcıdan doğrudan bağlanma `clientSecret`'ı açığa çıkarır ya da zayıf, herkese açık bir client gerektirir; reddedildi. CORS yüzeyi oluşmaz ve gateway internete açık kalmaz. Next.js ile gateway arasındaki trafik şifreli Swarm overlay ağındadır (`--opt encrypted`). Gateway'in internete açılma durumu için bkz. §2.
+3. Tarayıcıdan doğrudan bağlanma `clientSecret`'ı açığa çıkarır ya da zayıf, herkese açık bir client gerektirir; reddedildi. CORS yüzeyi oluşmaz ve gateway internete açık kalmaz.
+4. Next.js ile gateway arasındaki trafik şifreli Swarm overlay ağındadır (`--opt encrypted`). Gateway'in internete açılma durumu için bkz. §2.
 
 | İstemci | Kimlik | Kota / politika |
 |---|---|---|
