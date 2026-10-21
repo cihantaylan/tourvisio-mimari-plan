@@ -586,5 +586,6 @@ Rezervasyon geldiğinde seçili `offerId` ile TourVisio'nun `begintransaction` /
 ## 11. Süre ve yapay zekâ kullanımı
 
 - Harcanan süre: 1 saat
-- Yapay zekâ kullanımı: Claude Code kullandım: taslak, Mermaid şemaları, etkileşimli 3D topoloji ve metin düzeni onunla hazırlandı. Mimari kararları, varsayımları ve açık soruları gözden geçirip son hâline getirdim; TourVisio uç adlarını ödev dokümanıyla karşılaştırdım.
+- Araçlar: Topoloji ve şemalarda kendi topoloji şablonumu ve daha büyük mimariler için tasarladığım topoloji görselleştirme aracımı kullandım (etkileşimli 3D harita: `topology/`).
+- Yapay zekâ kullanımı: Claude Code ile taslak metni, Mermaid şemalarını ve metin düzenini hazırladım. Mimari kararları, varsayımları ve açık soruları gözden geçirip son hâline getirdim; TourVisio uç adlarını ödev dokümanıyla karşılaştırdım.
 - Şema kaynakları `docs/diagrams/` altında repoda durur.
