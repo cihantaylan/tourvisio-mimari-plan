@@ -98,7 +98,7 @@ Tek servis yeterli:
 
 ### Dağıtım topolojisi
 
-Gateway bugün internete kapalıdır. Mobil/B2B açıldığında yalnız `api.gidiyorum.com` rotası Traefik üzerinden açılır. Port ve erişim matrisi: [`docs/dagitim-topolojisi.md`](docs/dagitim-topolojisi.md). Etkileşimli 3D sürümü: <https://cihantaylan.com/vaka/tourvisio/> (kaynağı `topology/`; servis kodu değil, bu şemanın görselleştirme aracıdır).
+Gateway bugün internete kapalıdır. Mobil/B2B açıldığında yalnız `api.gidiyorum.com` rotası Traefik üzerinden açılır. Port ve erişim matrisi: [`docs/dagitim-topolojisi.md`](docs/dagitim-topolojisi.md). Etkileşimli 3D sürümü: <https://cihantaylan.com/case/tourvisio/> (kaynağı `topology/`; servis kodu değil, bu şemanın görselleştirme aracıdır).
 
 ```mermaid
 flowchart TB
