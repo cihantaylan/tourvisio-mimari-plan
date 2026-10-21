@@ -98,7 +98,7 @@ Tek servis yeterli:
 
 ### Dağıtım topolojisi
 
-Gateway bugün internete kapalıdır. Mobil/B2B açıldığında yalnız `api.gidiyorum.com` rotası Traefik üzerinden açılır. Port ve erişim matrisi: [`docs/dagitim-topolojisi.md`](docs/dagitim-topolojisi.md). Etkileşimli 3D sürümü: `topology/dist/tourvisio-topology.html`.
+Gateway bugün internete kapalıdır. Mobil/B2B açıldığında yalnız `api.gidiyorum.com` rotası Traefik üzerinden açılır. Port ve erişim matrisi: [`docs/dagitim-topolojisi.md`](docs/dagitim-topolojisi.md). Etkileşimli 3D sürümü: <https://cihantaylan.com/vaka/tourvisio/> (kaynağı `topology/`; servis kodu değil, bu şemanın görselleştirme aracıdır).
 
 ```mermaid
 flowchart TB
@@ -223,7 +223,7 @@ Prisma modelleri: `ApiClient` (id, clientId, secretHash, scopes, ratePlan, ipAll
 | | |
 |---|---|
 | Endpoint | `POST /v1/flights/searches` |
-| Girdi | `tripType` (`ONE_WAY` / `ROUND_TRIP`), `origin`, `destination` (`code` + `type`), `departureDate`, `returnDate?`, `passengers {adult, child, infant}`, `cabin`, `currency`, `culture`, `directOnly?` |
+| Girdi | `tripType` (`ONE_WAY` / `ROUND_TRIP`), `origin`, `destination` (`code` + `type`), `departureDate`, `returnDate?`, `passengers {adult, child, infant}`, `cabin`, `currency`, `culture`, `directOnly?`. Tek yönde `tripType: ONE_WAY` gönderilir ve `returnDate` olmaz; gidiş-dönüş örneği §4d'dedir. |
 | Çıktı | 201 Created: arama özeti, `searchId`, `status`, `expiresAt`, `links.results`. `status` şimdilik yalnız `READY` (arama istek-yanıt biçiminde). İlk sayfa gövdede dönmez, client sonuçları listeleme ucundan alır. |
 | TourVisio çağrısı | `pricesearch` (`ProductType: 3`, `CheckIn`, `DepartureLocations`, `ArrivalLocations`, `Passengers`). `flightpricesearch` ile farkı açık sorulardadır. |
 | Cache | Aşağıdaki anahtarlar: `sr` ve `sq` cache örneğinde, `sid` ve kilit durum örneğinde. |
@@ -556,7 +556,7 @@ Alarm örnekleri: PostgreSQL erişilemez, TourVisio token yenilenemiyor, breaker
 
 ## 8. Kapsam dışı: rezervasyon ve ödeme
 
-Rezervasyon geldiğinde seçili `offerId` ile TourVisio'nun `begintransaction` / `setreservationinfo` / `commit` adımları ayrı bir `Booking` servisinde (kendi veri deposu, BullMQ ile biletleme, idempotency anahtarı) çalışır. Ödeme sağlayıcısı ve yolcu verisi bu servise taşınır, arama servisi değişmez.
+Rezervasyon geldiğinde seçili `offerId` ile TourVisio'nun `begintransaction` / `setreservationinfo` / `commit` adımları, ödeme ve yolcu verisiyle birlikte ayrı bir `Booking` servisinde (kendi veri deposu, BullMQ ile biletleme, idempotency anahtarı) çalışır; arama servisi değişmez.
 
 ## 9. Varsayımlar
 
