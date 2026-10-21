@@ -1,0 +1,32 @@
+sequenceDiagram
+    autonumber
+    participant S as Flight servisi (herhangi bir pod)
+    participant K as Token yoneticisi
+    participant R as Redis
+    participant T as TourVisio
+
+    S->>K: getToken()
+    K->>R: GET tv:token
+    alt Token var ve kalan omur > 5 dk
+      R-->>K: token
+      K-->>S: token
+    else Yok veya omru bitiyor
+      K->>R: SET tv:lock NX EX 15
+      alt Kilit alindi
+        K->>T: POST /api/authenticationservice/login (Agency, User, Password)
+        T-->>K: token, expiresOn
+        K->>R: SET tv:token EX (expiresOn - 5 dk)
+        K->>R: DEL tv:lock
+        K-->>S: token
+      else Baska pod yeniliyor
+        K->>R: 200 ms araliklarla GET tv:token (en cok 5 sn)
+        R-->>K: yeni token
+        K-->>S: token
+      end
+    end
+    S->>T: arama/autocomplete (Authorization: Bearer token)
+    alt TourVisio 401 / gecersiz token
+      S->>K: invalidate(tokenId) (yalnizca ayni token ise sil)
+      K->>T: relogin (tek ucus)
+      S->>T: istegi bir kez tekrarla
+    end

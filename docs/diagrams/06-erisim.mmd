@@ -1,0 +1,19 @@
+flowchart LR
+    BR["Tarayici"]
+    MOB["Mobil uygulama<br/>(ileride)"]
+    B2B["B2B acente<br/>(ileride)"]
+    CF["Cloudflare"]
+    NX["Next.js sunucusu (BFF)"]
+    MBFF["Mobil BFF<br/>(veya ayri client)"]
+    GW["Flight Gateway"]
+
+    BR -->|"yalniz Next.js"| CF --> NX
+    NX ==>|"client: web, JWT, scope flights:read"| GW
+    MOB -.->|"cihaz kaniti + kisa omurlu token"| MBFF
+    MBFF -.->|"client: mobile"| GW
+    B2B -.->|"client credentials, kendi kota ve IP izni"| GW
+
+    classDef pub fill:#d4f4dd,stroke:#2e7d32,color:#000
+    classDef inner fill:#ffe0b2,stroke:#e65100,color:#000
+    class BR,CF,NX,MOB,B2B,MBFF pub
+    class GW inner

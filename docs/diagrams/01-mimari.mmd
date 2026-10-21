@@ -1,0 +1,62 @@
+flowchart TB
+    BR["Tarayici"]
+    MOB["Mobil uygulama<br/>(ileride)"]
+    B2B["B2B acente<br/>(ileride)"]
+    CF["Cloudflare<br/>WAF, bot, DDoS, TLS"]
+
+    subgraph FE["gidiyorum.com on yuzu"]
+      NX["Next.js sunucusu<br/>(BFF, route handlers)"]
+    end
+
+    subgraph SVC["Flight Gateway Servisi (stateless, N replika)"]
+      GWY["Giris katmani<br/>JWT dogrulama, rate limit,<br/>istek dogrulama, requestId"]
+      subgraph FM["Flight modulu"]
+        LOC["Lokasyon"]
+        SRCH["Arama ve sonuc<br/>(sayfalama, filtre, siralama)"]
+        OFR["Teklif detayi"]
+      end
+      PORT["FlightSupplier arayuzu"]
+      subgraph TVA["TourVisio adaptoru"]
+        TKN["Token yoneticisi<br/>(paylasimli, single-flight)"]
+        RES["Dayaniklilik<br/>timeout, retry, circuit breaker,<br/>bulkhead"]
+        MAP["Mapper<br/>TourVisio modeli to ic model"]
+      end
+    end
+
+    RD[("Redis<br/>token, arama sonuclari,<br/>autocomplete, rate limit, kilit")]
+    PG[("PostgreSQL<br/>client kayitlari, audit")]
+    OBS["OpenTelemetry, metrik,<br/>log, Sentry"]
+    SEC["Secret manager"]
+    TV["TourVisio (SAN TSG)<br/>login, autocomplete,<br/>pricesearch, getfarerules"]
+
+    BR -->|"HTTPS"| CF
+    CF --> NX
+    NX ==>|"HTTPS + JWT<br/>(sunucudan sunucuya)"| GWY
+    MOB -.->|"mobil BFF veya<br/>kisitli client"| GWY
+    B2B -.->|"client credentials"| GWY
+    GWY --> LOC
+    GWY --> SRCH
+    GWY --> OFR
+    LOC --> PORT
+    SRCH --> PORT
+    OFR --> PORT
+    PORT --> TKN
+    PORT --> RES
+    RES --> MAP
+    RES -->|"HTTPS"| TV
+    TKN -->|"login"| TV
+    LOC --> RD
+    SRCH --> RD
+    TKN --> RD
+    GWY --> PG
+    GWY -.-> OBS
+    SEC -.->|"baslangicta enjekte"| TKN
+
+    classDef pub fill:#d4f4dd,stroke:#2e7d32,color:#000
+    classDef inner fill:#ffe0b2,stroke:#e65100,color:#000
+    classDef ext fill:#d6e4ff,stroke:#1a4fb4,color:#000
+    class BR,CF,NX pub
+    classDef fut fill:#eeeeee,stroke:#888,stroke-dasharray:4 3,color:#000
+    class MOB,B2B fut
+    class GWY,LOC,SRCH,OFR,PORT,TKN,RES,MAP,RD,PG,OBS,SEC inner
+    class TV ext
